@@ -21,6 +21,8 @@ from os.path import join, dirname
 from os import makedirs, scandir, walk, remove
 from contextlib import contextmanager
 
+from marshmallow import ValidationError
+
 from .schemas import MetaSchema, VulnerabilityListSchema, VersionListSchema, FileListSchema
 from .serialize import serialize
 from .config import DEFAULT_PATH
@@ -114,7 +116,7 @@ class Storage:
             yield key, path, dirs, files
 
     def _write_to_cache(self, schema, item, *args):
-        data, errors = serialize(schema, item)
+        data = serialize(schema, item)
         path = join(".cache", item.key)
         self._prepare_path(path)
         with self._open('w', path, *args) as fp:
@@ -130,7 +132,7 @@ class Storage:
         remove(self._path(*args))
 
     def _write(self, schema, item, *args):
-        data, errors = serialize(schema, item)
+        data = serialize(schema, item)
         self._prepare_path(item.key)
         with self._open('w', item.key, *args) as fp:
             fp.write(data)
@@ -138,9 +140,10 @@ class Storage:
     def _read(self, schema, *args):
         try:
             with self._open('r', *args) as fp:
-                data, errors = schema.loads(fp.read())
-                if errors:
-                    raise Exception(*args, errors)
+                try:
+                    data = schema.loads(fp.read())
+                except ValidationError as e:
+                    raise Exception(*args, e.messages)
                 return data
         except JSONDecodeError:
             logger.critical("JSON Decode error in %s", args)

@@ -93,7 +93,7 @@ class Exporter:
         return vulnerability_list
 
     def _dump(self, file_name, data, schema):
-        data, errors = serialize(schema, data)
+        data = serialize(schema, data)
         with open(file_name, "w") as fp:
             fp.write(data)
 

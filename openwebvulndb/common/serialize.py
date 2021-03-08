@@ -19,9 +19,9 @@ import json
 
 
 def serialize(schema, data, *, indent=4):
-    data, errors = schema.dump(data)
+    data = schema.dump(data)
     clean_walk(data)
-    return json.dumps(data, indent=indent), errors
+    return json.dumps(data, indent=indent)
 
 
 def clean_walk(data):
